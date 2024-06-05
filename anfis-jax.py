@@ -1,5 +1,5 @@
+import numpy as np
 import jax.numpy as jnp
-
 
 class ANFIS:
 
@@ -7,8 +7,9 @@ class ANFIS:
         pass
 
 
-    def LSE(self):
-        pass
+    def LSE(self, A, B):
+        x, _, _, _ = jnp.linalg.lstsq(A, B)
+        return x
 
     def training(self):
         pass
