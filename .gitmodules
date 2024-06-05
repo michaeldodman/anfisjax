@@ -2,3 +2,6 @@
     path = Jax
     url = https://github.com/google/jax
     branch = main
+[submodule "jax"]
+	path = jax
+	url = https://github.com/google/jax
