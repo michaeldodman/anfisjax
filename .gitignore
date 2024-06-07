@@ -1,2 +1,4 @@
 .vm
-lse_test.py
+lse_test.py 
+membership_function_test.py
+lse_speed_test_all_jax.py
