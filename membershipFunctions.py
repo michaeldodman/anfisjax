@@ -3,10 +3,15 @@ import jax.numpy as jnp
 
 # Each instance of any of these must contain all the functions for one input -> array of parameters
 
+#TO DO
+# make sure the instances are for all the functions for one input i.e. as an array
+# some can stay as single numbers such as sigma if it is the same sigma for all - but in jax arrays
+# AKSHHULLY these should be as array of the same number since they get updated in training
+
 class gaussian:
     def __init__(self, lower_bound, upper_bound, n, sigma) -> None:
        self.m  = gaussian.calculate_m(lower_bound, upper_bound, n)
-       self.sigma = sigma
+       self.sigma = jnp.ones(n) * sigma
 
     def calculate_m(lower_bound, upper_bound, n):
         if n == 1:
