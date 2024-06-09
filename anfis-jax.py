@@ -3,13 +3,23 @@ import jax.numpy as jnp
 import jax
 import skfuzzy as fuzz
 
+from membershipFunctions import gaussian, gbell, trapezoidal, triangular, sigmoid
+
 class ANFIS:
 
     def __init__(self, X, y, membershipFn, epochs):
         self.X
         self.y
-        self.epochs
+        self.lower_bound
+        self.upper_bound
+        self.sigma
         self.membershipFunction
+        self.epochs
+
+
+
+    def initializeMembershipFunctions(self):
+        pass
 
 
     @jax.jit
