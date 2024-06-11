@@ -32,23 +32,27 @@ class gaussian:
 
 class gbell:
     def __init__(self, lower_bound, upper_bound, n) -> None:
-        self.c = gbell.initialize_c(lower_bound, upper_bound, n)
-        self.a
-        self.b
+        self.parameters = gbell.initialize_parameters(lower_bound, upper_bound, n)
 
-    def initialize_c(lower_bound, upper_bound, n):
+    def initialize_parameters(lower_bound, upper_bound, n):
+        domain = upper_bound - lower_bound
         if n == 1:
-            return (upper_bound - lower_bound) / 2
+            return jnp.array([domain / 4, 1, lower_bound + domain / 2])
         elif n == 2:
-            d = (upper_bound - lower_bound) / 3
-            return jnp.array([lower_bound + d, upper_bound - d])
+            d = domain / 3
+            return jnp.array(
+                [
+                    [(upper_bound + lower_bound) / 2, 1, lower_bound + d],
+                    [(upper_bound + lower_bound) / 2, 1, upper_bound - d],
+                ],
+            )
         else:
-            return jnp.linspace(start=lower_bound, stop=upper_bound, num=n)
-
-    def initialize_a(c):
-        # num_functions = len(c)
-
-        pass
+            parameters = jnp.ones((n, 3))
+            parameters = parameters.at[:, 0].set(domain / n)
+            parameters = parameters.at[:, 2].set(
+                jnp.linspace(start=lower_bound, stop=upper_bound, num=n)
+            )
+            return parameters
 
 
 class trapezoidal:
@@ -157,5 +161,5 @@ class sigmoid:
 
 
 if __name__ == "__main__":
-    val = sigmoid(0, 10, 4)
+    val = gbell(0, 10, 2)
     print(val.parameters)
