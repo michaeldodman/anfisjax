@@ -111,4 +111,7 @@ class sigmoid:
 
 if __name__ == "__main__":
     val = trapezoidal(0, 10, 3)
-    print(val.a, val.b, val.c, val.d)
+    print(val.a)
+    print(val.b)
+    print(val.c)
+    print(val.d)
