@@ -3,4 +3,4 @@ lse_test.py
 membership_function_speed_test.py
 lse_speed_test_all_jax.py
 mf_class_test_gauss.py
-plot_mf.py
+plot_trap_mf.py

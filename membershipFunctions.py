@@ -53,23 +53,30 @@ class gbell:
 
 class trapezoidal:
     def __init__(self, lower_bound, upper_bound, n) -> None:
-        self.parameters = trapezoidal.calculate_attributes(lower_bound, upper_bound, n)
+        self.parameters = trapezoidal.calculate_parameters(lower_bound, upper_bound, n)
 
-    def calculate_attributes(lower_bound, upper_bound, n):
+    def calculate_parameters(lower_bound, upper_bound, n):
         if n == 1:
-            return (
-                jnp.array([lower_bound]),
-                jnp.array([lower_bound * 4 / 3]),
-                jnp.array([lower_bound * 5 / 3]),
-                jnp.array([upper_bound]),
+            return jnp.array(
+                [[lower_bound, lower_bound * 4 / 3, lower_bound * 5 / 3, upper_bound]]
             )
         elif n == 2:
             step = (upper_bound - lower_bound) / 5
-            return (
-                jnp.array([lower_bound, lower_bound + (2 * step)]),
-                jnp.array([lower_bound + step, lower_bound + (3 * step)]),
-                jnp.array([lower_bound + (2 * step), lower_bound + (4 * step)]),
-                jnp.array([lower_bound + (3 * step), upper_bound]),
+            return jnp.array(
+                [
+                    [
+                        lower_bound,
+                        lower_bound + step,
+                        lower_bound + (2 * step),
+                        lower_bound + (3 * step),
+                    ],
+                    [
+                        lower_bound + (2 * step),
+                        lower_bound + (3 * step),
+                        lower_bound + (4 * step),
+                        upper_bound,
+                    ],
+                ]
             )
         else:
             domain = upper_bound - lower_bound
@@ -95,10 +102,42 @@ class trapezoidal:
 
 
 class triangular:
-    def __init__(self, domain, n) -> None:
-        self.a
-        self.b
-        self.c
+    def __init__(self, lower_bound, upper_bound, n) -> None:
+        self.parameters = triangular.calculate_parameters(lower_bound, upper_bound, n)
+
+    def calculate_parameters(lower_bound, upper_bound, n):
+        if n == 1:
+            return jnp.array(
+                [
+                    [
+                        lower_bound,
+                        (lower_bound + ((upper_bound - lower_bound) / 2)),
+                        upper_bound,
+                    ]
+                ]
+            )
+        elif n == 2:
+            step = (upper_bound - lower_bound) / 5
+            return jnp.array(
+                [
+                    [lower_bound, lower_bound + (step * 1), lower_bound + (step * 2)],
+                    [lower_bound + (step * 2), lower_bound + (step * 3), upper_bound],
+                ]
+            )
+        else:
+            domain = upper_bound - lower_bound
+            width = domain * ((2) / (n - 1))
+            leftmost_parameter = lower_bound - (width * 0.5)
+            first = jnp.array([leftmost_parameter, 0, leftmost_parameter + width])
+            parameters = jnp.zeros((n, 3))
+            parameters = parameters.at[0, :].set(first)
+
+            for i in range(1, n):
+                parameters = parameters.at[i, :].set(
+                    width * jnp.array([0, 1 / 2, 1]) + parameters[i - 1, 1]
+                )
+
+            return parameters
 
 
 class sigmoid:
@@ -108,8 +147,5 @@ class sigmoid:
 
 
 if __name__ == "__main__":
-    val = trapezoidal(0, 10, 3)
-    print(val.a)
-    print(val.b)
-    print(val.c)
-    print(val.d)
+    val = triangular(0, 10, 3)
+    print(val.parameters)
