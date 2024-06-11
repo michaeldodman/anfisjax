@@ -53,7 +53,7 @@ class gbell:
 
 class trapezoidal:
     def __init__(self, lower_bound, upper_bound, n) -> None:
-        self.a, self.b, self.c, self.d = trapezoidal.calculate_attributes(lower_bound, upper_bound, n)
+        self.parameters = trapezoidal.calculate_attributes(lower_bound, upper_bound, n)
 
     def calculate_attributes(lower_bound, upper_bound, n):
         if n == 1:
@@ -73,27 +73,25 @@ class trapezoidal:
             )
         else:
             domain = upper_bound - lower_bound
-            leftmost_parameter = lower_bound - (domain / (2 * (n - 1)))
-            rightmost_parameter = upper_bound + (domain / (2 * (n - 1)))
-            width = domain / (n - 1)
-            return (
-                jnp.linspace(
-                    start=leftmost_parameter, stop=(upper_bound - (width / 2)), num=n
-                ),
-                jnp.linspace(
-                    start=leftmost_parameter + (width / 3),
-                    stop=rightmost_parameter - (width * (2 / 3)),
-                    num=n,
-                ),
-                jnp.linspace(
-                    start=leftmost_parameter + ((2 * width) / 3),
-                    stop=rightmost_parameter - (width / 3),
-                    num=n,
-                ),
-                jnp.linspace(
-                    start=(lower_bound + (width / 2)), stop=rightmost_parameter, num=n
-                ),
+            width = domain * (n / (2 * n - 2))
+            leftmost_parameter = lower_bound - width / 2
+            first = jnp.array(
+                [
+                    leftmost_parameter,
+                    leftmost_parameter + (width / 3),
+                    leftmost_parameter + width * (2 / 3),
+                    leftmost_parameter + width,
+                ]
             )
+            parameters = jnp.zeros((n, 4))
+            parameters = parameters.at[0, :].set(first)
+
+            for i in range(1, n):
+                parameters = parameters.at[i, :].set(
+                    width * jnp.array([0, 1 / 3, 2 / 3, 1]) + parameters[i - 1, 2]
+                )
+
+            return parameters
 
 
 class triangular:
