@@ -1,4 +1,4 @@
 # anfisjax
-A library for training ANFIS models, written in Jax.
+A library for training ANFIS models using Jax.
 
 In progress.
