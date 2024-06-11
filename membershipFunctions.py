@@ -17,12 +17,12 @@ class membershipFunction:
 
 class gaussian:
     def __init__(self, lower_bound, upper_bound, n, sigma) -> None:
-        self.m = gaussian.calculate_m(lower_bound, upper_bound, n)
+        self.m = gaussian.initialize_m(lower_bound, upper_bound, n)
         self.sigma = jnp.ones(n) * sigma
 
-    def calculate_m(lower_bound, upper_bound, n):
+    def initialize_m(lower_bound, upper_bound, n):
         if n == 1:
-            return jnp.array([(upper_bound - lower_bound) / 2])
+            return jnp.array([lower_bound + ((upper_bound - lower_bound) / 2)])
         elif n == 2:
             d = (upper_bound - lower_bound) / 3
             return jnp.array([lower_bound + d, upper_bound - d])
@@ -32,11 +32,11 @@ class gaussian:
 
 class gbell:
     def __init__(self, lower_bound, upper_bound, n) -> None:
-        self.c = gbell.calculate_c(lower_bound, upper_bound, n)
+        self.c = gbell.initialize_c(lower_bound, upper_bound, n)
         self.a
         self.b
 
-    def calculate_c(lower_bound, upper_bound, n):
+    def initialize_c(lower_bound, upper_bound, n):
         if n == 1:
             return (upper_bound - lower_bound) / 2
         elif n == 2:
@@ -45,7 +45,7 @@ class gbell:
         else:
             return jnp.linspace(start=lower_bound, stop=upper_bound, num=n)
 
-    def calculate_a(c):
+    def initialize_a(c):
         # num_functions = len(c)
 
         pass
@@ -53,9 +53,9 @@ class gbell:
 
 class trapezoidal:
     def __init__(self, lower_bound, upper_bound, n) -> None:
-        self.parameters = trapezoidal.calculate_parameters(lower_bound, upper_bound, n)
+        self.parameters = trapezoidal.initialize_parameters(lower_bound, upper_bound, n)
 
-    def calculate_parameters(lower_bound, upper_bound, n):
+    def initialize_parameters(lower_bound, upper_bound, n):
         if n == 1:
             return jnp.array(
                 [[lower_bound, lower_bound * 4 / 3, lower_bound * 5 / 3, upper_bound]]
@@ -103,9 +103,9 @@ class trapezoidal:
 
 class triangular:
     def __init__(self, lower_bound, upper_bound, n) -> None:
-        self.parameters = triangular.calculate_parameters(lower_bound, upper_bound, n)
+        self.parameters = triangular.initialize_parameters(lower_bound, upper_bound, n)
 
-    def calculate_parameters(lower_bound, upper_bound, n):
+    def initialize_parameters(lower_bound, upper_bound, n):
         if n == 1:
             return jnp.array(
                 [
@@ -117,7 +117,7 @@ class triangular:
                 ]
             )
         elif n == 2:
-            step = (upper_bound - lower_bound) / 5
+            step = (upper_bound - lower_bound) / 4
             return jnp.array(
                 [
                     [lower_bound, lower_bound + (step * 1), lower_bound + (step * 2)],
@@ -141,11 +141,21 @@ class triangular:
 
 
 class sigmoid:
-    def __init__(self, domain, n) -> None:
-        self.a
-        self.c
+    def __init__(self, lower_bound, upper_bound, n) -> None:
+        self.parameters = sigmoid.initialize_parameters(lower_bound, upper_bound, n)
+
+    def initialize_parameters(lower_bound, upper_bound, n):
+        domain = upper_bound - lower_bound
+        if n == 1:
+            return jnp.array([[1, lower_bound + (domain / 2)]])
+        elif n == 2:
+            step = domain / 4
+            return jnp.array([[1, lower_bound + step], [1, lower_bound + 3 * step]])
+        else:
+            c_arr = jnp.linspace(start=lower_bound, stop=upper_bound, num=n)
+            return jnp.array([[1, c] for c in c_arr])
 
 
 if __name__ == "__main__":
-    val = triangular(0, 10, 3)
+    val = sigmoid(0, 10, 4)
     print(val.parameters)
