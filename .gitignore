@@ -4,3 +4,11 @@ membership_function_speed_test.py
 lse_speed_test_all_jax.py
 mf_class_test_gauss.py
 plot_trap_mf.py
+plot_fuzz_mf.py
+optimise_gbell.py
+complete_output.csv
+complete_output.csv:Zone.Identifier
+optimise_triangular.py
+optimise_trapezoidal.py
+optimise_sigmoid.py
+optimise_gauss.py
