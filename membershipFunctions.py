@@ -1,12 +1,12 @@
 import jax.numpy as jnp
-# import skfuzzy as fuzz
-
 
 class membershipFunctions:
-    def __init__(self, X, y):
-        self.max
+    def __init__(self, X, **kwargs):
+        self.X = X
+        self.input_columns = X.shape[1]
+        self.max = jnp.max
         self.min
-        self.sigma
+        self.sigma = jnp.std(X)
 
     def plot(object):
         pass
@@ -143,12 +143,24 @@ class sigmoid:
         if n == 1:
             return jnp.array([[1, (lower_bound + upper_bound) / 2]])
         elif n == 2:
-            return jnp.array([[1, lower_bound + ((upper_bound - lower_bound) / 4)], [1, lower_bound + 3 * ((upper_bound - lower_bound) / 4)]])
+            return jnp.array(
+                [
+                    [1, lower_bound + ((upper_bound - lower_bound) / 4)],
+                    [1, lower_bound + 3 * ((upper_bound - lower_bound) / 4)],
+                ]
+            )
         else:
             c_arr = jnp.linspace(start=lower_bound, stop=upper_bound, num=n)
             return jnp.stack([jnp.ones(n), c_arr], axis=1)
 
 
 if __name__ == "__main__":
-    val = gbell(0, 10, 2)
-    print(val.parameters)
+    """mfs = membershipFunctions(X, type = "gaussian", num = 3) # for all the same
+    mf_specs = mf_specs = [
+    ('gaussian', 3),
+    ('gbell', 2),
+    ('gaussian', 4),
+    ('trapezoidal', 5),
+    ('sigmoid', 3)
+]
+    mfs = membershipFunctions(X, mf_specs) # for custom per x column (len mf_specs = number of columns in X)"""
