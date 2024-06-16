@@ -13,3 +13,4 @@ optimise_trapezoidal.py
 optimise_sigmoid.py
 optimise_gauss.py
 elif_v_dict.py
+__pycache__
