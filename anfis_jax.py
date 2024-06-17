@@ -1,9 +1,71 @@
 import jax.numpy as jnp
-import numpy as np
+import jax
+import skfuzzy as fuzz
+
+
+class ANFIS:
+    def __init__(self, X, y, membershipFn, epochs):
+        self.X
+        self.y
+        self.membershipFunction
+        self.epochs
+        self.lower_bound
+        self.upper_bound
+        self.sigma
+
+    def initializeMembershipFunctions(self):
+        pass
+
+    @jax.jit
+    def LSE(A, B, initialGamma=1000.0):
+        coeffMat = A
+        rhsMat = B
+        S = jnp.eye(coeffMat.shape[1]) * initialGamma
+        x = jnp.zeros((coeffMat.shape[1], 1))
+
+        def body_fn(i, val):
+            S, x = val
+            a = coeffMat[i, :]
+            b = rhsMat[i]
+            a_T = jnp.transpose(a)
+            S = S - (jnp.dot(jnp.dot(jnp.dot(S, a_T), a), S)) / (
+                1 + jnp.dot(jnp.dot(S, a), a)
+            )
+            x = x + jnp.dot(S, jnp.dot(a_T, b - jnp.dot(a, x)))
+            return S, x
+
+        S, x = jax.lax.fori_loop(0, len(coeffMat[:, 0]), body_fn, (S, x))
+        return x
+
+    def membershipFunction(self, func_name, x, *args):
+        func_dict = {
+            "gaussmf": fuzz.gaussmf,
+            "gbellmf": fuzz.gbellmf,
+            "trapmf": fuzz.trapmf,
+            "trimf": fuzz.trimf,
+            "sigmf": fuzz.sigmf,
+        }
+
+        if func_name in func_dict:
+            func = func_dict[func_name]
+            return func(x, *args)
+        else:
+            raise ValueError(f"Unknown membership function: {func_name}")
+
+    def training(self):
+        pass
+
+    def forwardPass(self):
+        pass
+
+    def backProp(self):
+        pass
+
+    def pred(self, x):
+        pass
 
 class membershipFunctions:
     def __init__(self, X, **kwargs):
-
         if isinstance(X, list):
             X = jnp.array(X)
         elif isinstance(X, jnp.ndarray):
@@ -11,14 +73,12 @@ class membershipFunctions:
         else:
             raise ValueError("Invalid input type for X. Expected list or jnp.ndarray.")
 
-        #self.X = X
         input_columns = X.shape[0]
-        lower_bound = jnp.max(X, axis = 1)
-        upper_bound = jnp.min(X, axis = 1)
-        sigma = jnp.std(X, axis = 1)
-        
-        self.membership_functions = dict() # dict with input name and object
-        #self.names = []
+        lower_bound = jnp.min(X, axis=1)
+        upper_bound = jnp.max(X, axis=1)
+        sigma = jnp.std(X, axis=1)
+
+        self.membership_functions = dict()
 
         mf_dict = {
             "gaussian": gaussian,
@@ -56,13 +116,12 @@ class membershipFunctions:
                     mf = mf_class(lower_bound[i], upper_bound[i], mf_num, sigma[i])
                 else:
                     mf = mf_class(lower_bound[i], upper_bound[i], mf_num)
-                #self.names.append(f"{mf_type}_{i+1}")
             else:
                 raise ValueError(f"Invalid membership function type: {mf_type}")
             if "names" in kwargs:
                 self.membership_functions[kwargs["names"][i]] = mf
             else:
-                self.membership_functions[f"{mf_type}_{mf_num}_{i+1}"] = mf
+                self.membership_functions[f"{mf_type}x{mf_num}_{i+1}"] = mf
 
     def plot(object):
         pass
@@ -70,7 +129,9 @@ class membershipFunctions:
 
 class gaussian(membershipFunctions):
     def __init__(self, lower_bound, upper_bound, n, sigma):
-        self.parameters = gaussian.initialize_parameters(lower_bound, upper_bound, n, sigma)
+        self.parameters = gaussian.initialize_parameters(
+            lower_bound, upper_bound, n, sigma
+        )
 
     @staticmethod
     def initialize_parameters(lower_bound, upper_bound, n, sigma):
@@ -209,32 +270,4 @@ class sigmoid(membershipFunctions):
 
 
 if __name__ == "__main__":
-
-    # Generate a random dataset with 5 nested arrays, each containing 10 values
-    # Set a random seed for reproducibility
-    np.random.seed(42)
-
-    # Generate a random dataset with 5 nested arrays, each containing 10 values
-    X = np.array([
-        np.random.normal(size=10),
-        np.random.normal(size=10),
-        np.random.normal(size=10),
-        np.random.normal(size=10),
-        np.random.normal(size=10)
-    ])
-    # Convert the NumPy array to a JAX array
-    X_jax = jnp.array(X)
-
-    mfs_default = membershipFunctions(X_jax, type="trapezoidal", num=3)  # for all the same
-    from pprint import pprint
-    pprint(mfs_default.membership_functions['trapezoidal_3_1'].parameters)
-
-  
-    mf_specs = [
-        ("gaussian", 3),
-        ("gbell", 2),
-        ("gaussian", 4),
-        ("trapezoidal", 5),
-        ("sigmoid", 3),
-    ]
-    mfs_standard = membershipFunctions(X_jax, mf_specs = mf_specs)
+    pass

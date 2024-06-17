@@ -1,19 +1,147 @@
 import jax.numpy as jnp
+import skfuzzy as fuzz
+import matplotlib.pyplot as plt
+
 
 class membershipFunctions:
     def __init__(self, X, **kwargs):
-        self.X = X
-        self.input_columns = X.shape[1]
-        self.max = jnp.max
-        self.min
-        self.sigma = jnp.std(X)
+        if isinstance(X, list):
+            X = jnp.array(X)
+        elif isinstance(X, jnp.ndarray):
+            pass
+        else:
+            raise ValueError("Invalid input type for X. Expected list or jnp.ndarray.")
 
-    def plot(object):
-        pass
+        input_columns = X.shape[0]
+        sigma = jnp.std(X, axis=1)
+
+        self.membership_functions = dict()
+        self.lower_bound = jnp.min(X, axis=1)
+        self.upper_bound = jnp.max(X, axis=1)
+        mf_dict = {
+            "gaussian": gaussian,
+            "gbell": gbell,
+            "trapezoidal": trapezoidal,
+            "triangular": triangular,
+            "sigmoid": sigmoid,
+        }
+
+        if "type" in kwargs and "num" in kwargs:
+            mf_type = kwargs["type"]
+            mf_num = kwargs["num"]
+            mf_specs = [(mf_type, mf_num)] * input_columns
+        elif "mf_specs" in kwargs:
+            mf_specs = kwargs["mf_specs"]
+            if not isinstance(mf_specs, list) or not all(
+                isinstance(spec, tuple) and len(spec) == 2 for spec in mf_specs
+            ):
+                raise ValueError("Invalid membership function specification")
+            if len(mf_specs) != input_columns:
+                raise ValueError(
+                    "Number of membership function specifications must match the number of inputs"
+                )
+        else:
+            raise ValueError(
+                "Invalid input format. Please provide either 'type' and 'num' or 'mf_specs'."
+            )
+
+        for i in range(input_columns):
+            mf_type, mf_num = mf_specs[i]
+
+            if mf_type in mf_dict:
+                mf_class = mf_dict[mf_type]
+                if mf_class is gaussian:
+                    mf = mf_class(
+                        self.lower_bound[i], self.upper_bound[i], mf_num, sigma[i]
+                    )
+                else:
+                    mf = mf_class(self.lower_bound[i], self.upper_bound[i], mf_num)
+            else:
+                raise ValueError(f"Invalid membership function type: {mf_type}")
+            if "names" in kwargs:
+                self.membership_functions[kwargs["names"][i]] = mf
+            else:
+                self.membership_functions[f"{mf_type}x{mf_num}_{i+1}"] = mf
+
+    def plot(self):
+        skfuzzy_functions = []
+        titles = []
+        mf_dict = {
+            "gaussian": fuzz.gaussmf,
+            "gbell": fuzz.gbellmf,
+            "trapezoidal": fuzz.trapmf,
+            "triangular": fuzz.trimf,
+            "sigmoid": fuzz.sigmf,
+        }
+
+        for name, obj in self.membership_functions.items():
+
+            titles.append(name)
+            
+            x = jnp.linspace(
+                start=obj.lower_bound,
+                stop=obj.upper_bound,
+                num=round(obj.upper_bound - obj.lower_bound),
+            )
+
+            class_name = str(obj.__class__).split(".")[-1]
+            mf_type = class_name.split("'")[0]
+
+            for i, params in enumerate(obj.parameters):
+                skfuzzy_func = mf_dict[mf_type]
+                mem_func = skfuzzy_func(x, params)
+                print(mem_func)
+                skfuzzy_functions.append(mem_func)
+
+       # print(skfuzzy_functions)
+
+    def plot_old(self):
+        # jnp.arrange to get linearly spaced values
+        x_values = jnp.stack(
+            [self.lower_bound, self.upper_bound, jnp.ones_like(self.lower_bound)],
+            axis=1,
+        )
+        x_arrays = []
+        for start, stop, step in x_values:
+            x_arrays.append(jnp.arange(start=start, stop=(stop + step), step=step))
+
+        # generate fuzzy membership
+
+        types = []
+        for item in self.membership_functions.items():
+            class_name = str(item[1].__class__).split(".")[-1]
+            type = class_name.split("'")[0]
+            types.append(type)
+
+        mf_dict = {
+            "gaussian": fuzz.gaussmf,
+            "gbell": fuzz.gbellmf,
+            "trapezoidal": fuzz.trapmf,
+            "triangular": fuzz.trimf,
+            "sigmoid": fuzz.sigmf,
+        }
+
+        functions = []
+        for i, (mf_name, mf_obj) in enumerate(self.membership_functions.items()):
+            mf_type = types[i]
+            mf_func = mf_dict[mf_type]
+            # Call the function with the appropriate arguments
+            result = mf_func(x_arrays[i], mf_obj.parameters)
+            functions.append(result)
+
+        for name, obj in self.membership_functions.items():
+            print(f"{name}:")
+            for i, params in enumerate(obj.parameters):
+                print(f"  Nested Array {i+1}: {params}")
+
+        print(functions)
+        # plot these as x, y
 
 
-class gaussian:
-    def __init__(self, lower_bound, upper_bound, n, sigma) -> None:
+class gaussian(membershipFunctions):
+    def __init__(self, lower_bound, upper_bound, n, sigma):
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
         self.parameters = gaussian.initialize_parameters(
             lower_bound, upper_bound, n, sigma
         )
@@ -31,8 +159,10 @@ class gaussian:
             return jnp.stack([m, sigma_arr], axis=1)
 
 
-class gbell:
-    def __init__(self, lower_bound, upper_bound, n) -> None:
+class gbell(membershipFunctions):
+    def __init__(self, lower_bound, upper_bound, n):
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
         self.parameters = gbell.initialize_parameters(lower_bound, upper_bound, n)
 
     @staticmethod
@@ -56,8 +186,10 @@ class gbell:
             return parameters
 
 
-class trapezoidal:
-    def __init__(self, lower_bound, upper_bound, n) -> None:
+class trapezoidal(membershipFunctions):
+    def __init__(self, lower_bound, upper_bound, n):
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
         self.parameters = trapezoidal.initialize_parameters(lower_bound, upper_bound, n)
 
     @staticmethod
@@ -106,8 +238,10 @@ class trapezoidal:
             return parameters
 
 
-class triangular:
-    def __init__(self, lower_bound, upper_bound, n) -> None:
+class triangular(membershipFunctions):
+    def __init__(self, lower_bound, upper_bound, n):
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
         self.parameters = triangular.initialize_parameters(lower_bound, upper_bound, n)
 
     @staticmethod
@@ -134,8 +268,10 @@ class triangular:
             return parameters
 
 
-class sigmoid:
-    def __init__(self, lower_bound, upper_bound, n) -> None:
+class sigmoid(membershipFunctions):
+    def __init__(self, lower_bound, upper_bound, n):
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
         self.parameters = sigmoid.initialize_parameters(lower_bound, upper_bound, n)
 
     @staticmethod
@@ -155,12 +291,4 @@ class sigmoid:
 
 
 if __name__ == "__main__":
-    """mfs = membershipFunctions(X, type = "gaussian", num = 3) # for all the same
-    mf_specs = mf_specs = [
-    ('gaussian', 3),
-    ('gbell', 2),
-    ('gaussian', 4),
-    ('trapezoidal', 5),
-    ('sigmoid', 3)
-]
-    mfs = membershipFunctions(X, mf_specs) # for custom per x column (len mf_specs = number of columns in X)"""
+    pass
