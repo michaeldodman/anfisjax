@@ -64,8 +64,6 @@ class membershipFunctions:
                 self.membership_functions[f"{mf_type}x{mf_num}_{i+1}"] = mf
 
     def plot(self):
-        skfuzzy_functions = []
-        titles = []
         mf_dict = {
             "gaussian": fuzz.gaussmf,
             "gbell": fuzz.gbellmf,
@@ -74,68 +72,45 @@ class membershipFunctions:
             "sigmoid": fuzz.sigmf,
         }
 
-        for name, obj in self.membership_functions.items():
+        num_subplots = len(self.membership_functions)
+        num_cols = int(num_subplots**0.5)
+        num_rows = (num_subplots + num_cols - 1) // num_cols
 
-            titles.append(name)
-            
+        fig, axes = plt.subplots(nrows=num_rows, ncols=num_cols, figsize=(8, 8))
+        axes = axes.flatten()
+
+        linewidth = 2.0  # Set the desired line width
+        ylim_margin = linewidth / (2 * 72)  # Calculate the margin based on line width
+
+        for subplot_index, (name, obj) in enumerate(self.membership_functions.items()):
             x = jnp.linspace(
                 start=obj.lower_bound,
                 stop=obj.upper_bound,
-                num=round(obj.upper_bound - obj.lower_bound),
+                num=round(obj.upper_bound - obj.lower_bound) * 100,
             )
-
             class_name = str(obj.__class__).split(".")[-1]
             mf_type = class_name.split("'")[0]
 
-            for i, params in enumerate(obj.parameters):
+            for _, params in enumerate(obj.parameters):
                 skfuzzy_func = mf_dict[mf_type]
-                mem_func = skfuzzy_func(x, params)
-                print(mem_func)
-                skfuzzy_functions.append(mem_func)
+                if mf_type in ["gaussian", "gbell", "sigmoid"]:
+                    mem_func = skfuzzy_func(x, *params)
+                else:
+                    mem_func = skfuzzy_func(x, params)
 
-       # print(skfuzzy_functions)
+                axes[subplot_index].plot(x, mem_func)
 
-    def plot_old(self):
-        # jnp.arrange to get linearly spaced values
-        x_values = jnp.stack(
-            [self.lower_bound, self.upper_bound, jnp.ones_like(self.lower_bound)],
-            axis=1,
-        )
-        x_arrays = []
-        for start, stop, step in x_values:
-            x_arrays.append(jnp.arange(start=start, stop=(stop + step), step=step))
+            axes[subplot_index].set_title(name)
+            axes[subplot_index].set_xlabel("x")
+            axes[subplot_index].set_ylabel("Membership")
+            axes[subplot_index].set_xlim([obj.lower_bound, obj.upper_bound])
+            axes[subplot_index].set_ylim([0, 1 + ylim_margin])
 
-        # generate fuzzy membership
+        for i in range(num_subplots, len(axes)):
+            fig.delaxes(axes[i])
 
-        types = []
-        for item in self.membership_functions.items():
-            class_name = str(item[1].__class__).split(".")[-1]
-            type = class_name.split("'")[0]
-            types.append(type)
-
-        mf_dict = {
-            "gaussian": fuzz.gaussmf,
-            "gbell": fuzz.gbellmf,
-            "trapezoidal": fuzz.trapmf,
-            "triangular": fuzz.trimf,
-            "sigmoid": fuzz.sigmf,
-        }
-
-        functions = []
-        for i, (mf_name, mf_obj) in enumerate(self.membership_functions.items()):
-            mf_type = types[i]
-            mf_func = mf_dict[mf_type]
-            # Call the function with the appropriate arguments
-            result = mf_func(x_arrays[i], mf_obj.parameters)
-            functions.append(result)
-
-        for name, obj in self.membership_functions.items():
-            print(f"{name}:")
-            for i, params in enumerate(obj.parameters):
-                print(f"  Nested Array {i+1}: {params}")
-
-        print(functions)
-        # plot these as x, y
+        plt.tight_layout()
+        plt.show()
 
 
 class gaussian(membershipFunctions):
@@ -152,10 +127,12 @@ class gaussian(membershipFunctions):
             return jnp.array([[lower_bound + ((upper_bound - lower_bound) / 2), sigma]])
         elif n == 2:
             d = (upper_bound - lower_bound) / 3
-            return jnp.array([[lower_bound + d, sigma], [upper_bound - d, sigma]])
+            return jnp.array(
+                [[lower_bound + d, sigma / n], [upper_bound - d, sigma / n]]
+            )
         else:
             m = jnp.linspace(start=lower_bound, stop=upper_bound, num=n)
-            sigma_arr = jnp.ones(n) * sigma
+            sigma_arr = jnp.ones(n) * (sigma / (n - 1))
             return jnp.stack([m, sigma_arr], axis=1)
 
 
@@ -174,8 +151,8 @@ class gbell(membershipFunctions):
             d = domain / 3
             return jnp.array(
                 [
-                    [(upper_bound + lower_bound) / 2, 1, lower_bound + d],
-                    [(upper_bound + lower_bound) / 2, 1, upper_bound - d],
+                    [(upper_bound + lower_bound) / (n + 2), 1, lower_bound + d],
+                    [(upper_bound + lower_bound) / (n + 2), 1, upper_bound - d],
                 ],
             )
         else:
@@ -277,17 +254,17 @@ class sigmoid(membershipFunctions):
     @staticmethod
     def initialize_parameters(lower_bound, upper_bound, n):
         if n == 1:
-            return jnp.array([[1, (lower_bound + upper_bound) / 2]])
+            return jnp.array([[(lower_bound + upper_bound) / 2, 1]])
         elif n == 2:
             return jnp.array(
                 [
-                    [1, lower_bound + ((upper_bound - lower_bound) / 4)],
-                    [1, lower_bound + 3 * ((upper_bound - lower_bound) / 4)],
+                    [lower_bound + ((upper_bound - lower_bound) / 4), 2],
+                    [lower_bound + 3 * ((upper_bound - lower_bound) / 4), 2],
                 ]
             )
         else:
-            c_arr = jnp.linspace(start=lower_bound, stop=upper_bound, num=n)
-            return jnp.stack([jnp.ones(n), c_arr], axis=1)
+            b_arr = jnp.linspace(start=lower_bound, stop=upper_bound, num=n)
+            return jnp.stack([b_arr, jnp.ones(n) * (0.5*n + 0.5)], axis=1)
 
 
 if __name__ == "__main__":
