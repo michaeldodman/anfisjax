@@ -264,7 +264,7 @@ class sigmoid(membershipFunctions):
             )
         else:
             b_arr = jnp.linspace(start=lower_bound, stop=upper_bound, num=n)
-            return jnp.stack([b_arr, jnp.ones(n) * (0.5*n + 0.5)], axis=1)
+            return jnp.stack([b_arr, jnp.ones(n) * (0.5 * n + 0.5)], axis=1)
 
 
 if __name__ == "__main__":
