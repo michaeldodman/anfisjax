@@ -19,6 +19,7 @@ class membershipFunctions:
         self.membership_functions = dict()
         self.lower_bound = jnp.min(X, axis=1)
         self.upper_bound = jnp.max(X, axis=1)
+
         mf_dict = {
             "gaussian": gaussian,
             "gbell": gbell,
@@ -80,8 +81,8 @@ class membershipFunctions:
         fig, axes = plt.subplots(nrows=num_rows, ncols=num_cols, figsize=(8, 8))
         axes = axes.flatten()
 
-        linewidth = 2.0  # Set the desired line width
-        ylim_margin = linewidth / (2 * 72)  # Calculate the margin based on line width
+        linewidth = 2.0
+        ylim_margin = linewidth / (2 * 72)
 
         for subplot_index, (name, obj) in enumerate(self.membership_functions.items()):
             x = jnp.linspace(
@@ -270,6 +271,12 @@ class sigmoid(membershipFunctions):
 class MembershipFunctionNode:
     def __init__(self,mf):
         self.mf = mf
+
+    def forward_pass(self):
+        pass
+
+    def backward_pass(self):
+        pass
 
 class RuleNode:
     def __init__(self,mf_nodes):
