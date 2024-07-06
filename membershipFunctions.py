@@ -2,7 +2,6 @@ import jax.numpy as jnp
 import skfuzzy as fuzz
 import matplotlib.pyplot as plt
 
-
 class MembershipFunctions:
     def __init__(self, X, **kwargs):
         self.X = self._validate_input(X)
