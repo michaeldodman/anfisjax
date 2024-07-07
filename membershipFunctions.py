@@ -103,19 +103,19 @@ class MembershipFunctions:
     def gbell(lower_bound, upper_bound, n):
         domain = upper_bound - lower_bound
         if n == 1:
-            return jnp.array([domain / 4, 1, lower_bound + domain / 2])
+            return jnp.array([domain / 4, 2, lower_bound + domain / 2])
         elif n == 2:
             d = domain / 3
             return jnp.array(
                 [
-                    [(upper_bound + lower_bound) / (n + 2), 1, lower_bound + d],
-                    [(upper_bound + lower_bound) / (n + 2), 1, upper_bound - d],
+                    [(upper_bound + lower_bound) / (n + 2), 2, lower_bound + d],
+                    [(upper_bound + lower_bound) / (n + 2), 2, upper_bound - d],
                 ],
             )
         else:
             centers = jnp.linspace(start=lower_bound, stop=upper_bound, num=n)
             widths = jnp.full(n, domain / n)
-            heights = jnp.ones(n)
+            heights = jnp.ones(n) * 2
             parameters = jnp.stack([widths, heights, centers], axis=1)
             return parameters
 
